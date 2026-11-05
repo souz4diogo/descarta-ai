@@ -1,44 +1,40 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { AlertTriangle, ChevronDown, MapPin, RotateCw, Search } from "lucide-react";
-import { api, type Categoria, type MaterialDetalhe, type MaterialResumo } from "../api";
+import { AlertTriangle, ChevronDown, MapPin, Search } from "lucide-react";
+import { api, type Categoria, type MaterialResumo } from "../api";
 import { IconeCategoria } from "../icones";
+import { Aviso, AvisoErro, ListaEsqueleto } from "../componentes/Estados";
+import { numeroDaUrl, plural, useConsulta } from "../util";
+
+const ESPERA_DIGITACAO_MS = 250;
 
 export default function Guia() {
   const [params, setParams] = useSearchParams();
-  const categoriaId = Number(params.get("categoriaId")) || undefined;
-  const [busca, setBusca] = useState(params.get("busca") ?? "");
-  const [categorias, setCategorias] = useState<Categoria[]>([]);
-  const [materiais, setMateriais] = useState<MaterialResumo[]>();
-  const [detalhes, setDetalhes] = useState<Record<number, MaterialDetalhe>>({});
+  const categoriaId = numeroDaUrl(params, "categoriaId");
+  const buscaUrl = params.get("busca") ?? "";
+  const [busca, setBusca] = useState(buscaUrl);
   const [aberto, setAberto] = useState<number>();
-  const [erro, setErro] = useState(false);
-  const [tentativa, setTentativa] = useState(0);
 
-  useEffect(() => { api.categorias().then(setCategorias).catch(() => setErro(true)); }, [tentativa]);
-
+  // Grava a busca na URL só depois que o usuário para de digitar.
   useEffect(() => {
-    const t = setTimeout(() => {
-      setErro(false);
-      api.materiais(busca.trim(), categoriaId).then(setMateriais).catch(() => setErro(true));
-      const p = new URLSearchParams(params);
-      if (busca.trim()) p.set("busca", busca.trim()); else p.delete("busca");
-      setParams(p, { replace: true });
-    }, 250);
+    const t = setTimeout(() => setParams(p => {
+      const novo = new URLSearchParams(p);
+      if (busca.trim()) novo.set("busca", busca.trim()); else novo.delete("busca");
+      return novo;
+    }, { replace: true }), ESPERA_DIGITACAO_MS);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [busca, categoriaId, tentativa]);
+  }, [busca, setParams]);
 
-  const filtrar = (id?: number) => {
-    const p = new URLSearchParams(params);
-    if (id) p.set("categoriaId", String(id)); else p.delete("categoriaId");
-    setParams(p, { replace: true });
-  };
+  const categorias = useConsulta(s => api.categorias(s), []);
+  const materiais = useConsulta(s => api.materiais({ busca: buscaUrl, categoriaId }, s), [buscaUrl, categoriaId]);
 
-  const alternar = (id: number) => {
-    setAberto(aberto === id ? undefined : id);
-    if (!detalhes[id]) api.material(id).then(d => setDetalhes(x => ({ ...x, [id]: d }))).catch(() => setErro(true));
-  };
+  const filtrar = (id?: number) => setParams(p => {
+    const novo = new URLSearchParams(p);
+    if (id) novo.set("categoriaId", String(id)); else novo.delete("categoriaId");
+    return novo;
+  }, { replace: true });
+
+  const limpar = () => { setBusca(""); filtrar(); };
 
   return (
     <section>
@@ -48,79 +44,94 @@ export default function Guia() {
       <div className="campo-busca">
         <Search size={20} aria-hidden="true" className="busca-icone" />
         <input id="busca-guia" type="search" placeholder="Ex.: pilha, remédio, colchão" value={busca}
-          onChange={e => setBusca(e.target.value)} autoComplete="off" />
+          maxLength={60} onChange={e => setBusca(e.target.value)} autoComplete="off" />
       </div>
 
-      <div className="chips" role="group" aria-label="Filtrar por tipo">
-        <button aria-pressed={!categoriaId} onClick={() => filtrar()}>Todos</button>
-        {categorias.map(c => (
-          <button key={c.id} aria-pressed={categoriaId === c.id} onClick={() => filtrar(c.id)}
-           >
-            <IconeCategoria nome={c.icone} size={16} /> {c.nome}
-          </button>
-        ))}
-      </div>
+      <FiltroCategorias categorias={categorias.dados ?? []} selecionada={categoriaId} onFiltrar={filtrar} />
 
       <div aria-live="polite" className="sr-only">
-        {materiais && `${materiais.length} ${materiais.length === 1 ? "item encontrado" : "itens encontrados"}`}
+        {materiais.dados && plural(materiais.dados.length, "item encontrado", "itens encontrados")}
       </div>
 
-      {erro ? (
-        <div className="aviso erro" role="alert">
-          <p>Não foi possível carregar os dados. Verifique sua conexão.</p>
-          <button className="botao secundario" onClick={() => setTentativa(t => t + 1)}>
-            <RotateCw size={18} aria-hidden="true" /> Tentar de novo
-          </button>
-        </div>
-      ) : !materiais ? (
-        <ul className="lista" aria-hidden="true">{[1, 2, 3, 4].map(i => <li key={i} className="esqueleto" />)}</ul>
-      ) : materiais.length === 0 ? (
-        <div className="aviso">
-          <p>Nenhum item encontrado para “{busca}”.</p>
-          <p>Tente outra palavra ou <button className="link" onClick={() => { setBusca(""); filtrar(); }}>veja todos os itens</button>.</p>
-        </div>
+      {materiais.erro ? (
+        <AvisoErro mensagem="Não foi possível carregar os dados. Verifique sua conexão." onTentar={materiais.tentarDeNovo} />
+      ) : !materiais.dados ? (
+        <ListaEsqueleto itens={4} />
+      ) : materiais.dados.length === 0 ? (
+        <Aviso>
+          <p>Nenhum item encontrado{buscaUrl && <> para “{buscaUrl}”</>}.</p>
+          <p>Tente outra palavra ou <button className="link" onClick={limpar}>veja todos os itens</button>.</p>
+        </Aviso>
       ) : (
         <ul className="lista">
-          {materiais.map(m => {
-            const d = detalhes[m.id];
-            const cat = categorias.find(c => c.id === m.categoriaId);
-            const expandido = aberto === m.id;
-            return (
-              <li key={m.id} className={`material ${expandido ? "aberto" : ""}`}>
-                <h2 className="material-titulo">
-                  <button className="item" onClick={() => alternar(m.id)} aria-expanded={expandido}
-                    aria-controls={`det-${m.id}`}>
-                    <span className="item-icone">
-                      <IconeCategoria nome={cat?.icone} />
-                    </span>
-                    <span className="item-texto">
-                      <span className="item-nome">{m.nome}</span>
-                      <span className="item-meta">{m.categoria}</span>
-                    </span>
-                    {m.perigoso && <span className="selo"><AlertTriangle size={14} aria-hidden="true" /> Perigoso</span>}
-                    <ChevronDown size={20} aria-hidden="true" className="seta" />
-                  </button>
-                </h2>
-                {expandido && (
-                  <div id={`det-${m.id}`} className="detalhe">
-                    {!d ? <p className="carregando">Carregando…</p> : (
-                      <>
-                        <p>{d.instrucoes}</p>
-                        {d.cuidados && (
-                          <p className="cuidado"><AlertTriangle size={18} aria-hidden="true" /><span><strong>Cuidado:</strong> {d.cuidados}</span></p>
-                        )}
-                        <Link to={`/mapa?materialId=${m.id}`} className="botao">
-                          <MapPin size={18} aria-hidden="true" /> Onde levar
-                        </Link>
-                      </>
-                    )}
-                  </div>
-                )}
-              </li>
-            );
-          })}
+          {materiais.dados.map(m => (
+            <ItemMaterial key={m.id} material={m}
+              icone={categorias.dados?.find(c => c.id === m.categoriaId)?.icone}
+              expandido={aberto === m.id}
+              onAlternar={() => setAberto(aberto === m.id ? undefined : m.id)} />
+          ))}
         </ul>
       )}
     </section>
+  );
+}
+
+function FiltroCategorias({ categorias, selecionada, onFiltrar }:
+  { categorias: Categoria[]; selecionada?: number; onFiltrar: (id?: number) => void }) {
+  return (
+    <div className="chips" role="group" aria-label="Filtrar por tipo">
+      <button aria-pressed={!selecionada} onClick={() => onFiltrar()}>Todos</button>
+      {categorias.map(c => (
+        <button key={c.id} aria-pressed={selecionada === c.id} onClick={() => onFiltrar(c.id)}>
+          <IconeCategoria nome={c.icone} size={16} /> {c.nome}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ItemMaterial({ material: m, icone, expandido, onAlternar }:
+  { material: MaterialResumo; icone?: string; expandido: boolean; onAlternar: () => void }) {
+  return (
+    <li className={`material ${expandido ? "aberto" : ""}`}>
+      <h2 className="material-titulo">
+        <button className="item" onClick={onAlternar} aria-expanded={expandido} aria-controls={`det-${m.id}`}>
+          <span className="item-icone"><IconeCategoria nome={icone} /></span>
+          <span className="item-texto">
+            <span className="item-nome">{m.nome}</span>
+            <span className="item-meta">{m.categoria}</span>
+          </span>
+          {m.perigoso && <span className="selo"><AlertTriangle size={14} aria-hidden="true" /> Perigoso</span>}
+          <ChevronDown size={20} aria-hidden="true" className="seta" />
+        </button>
+      </h2>
+      {expandido && <DetalheMaterial id={m.id} />}
+    </li>
+  );
+}
+
+function DetalheMaterial({ id }: { id: number }) {
+  const detalhe = useConsulta(s => api.material(id, s), [id]);
+  return (
+    <div id={`det-${id}`} className="detalhe">
+      {detalhe.erro ? (
+        <p className="erro">Não foi possível carregar as instruções. <button className="link" onClick={detalhe.tentarDeNovo}>Tentar de novo</button></p>
+      ) : !detalhe.dados ? (
+        <p className="carregando">Carregando…</p>
+      ) : (
+        <>
+          <p>{detalhe.dados.instrucoes}</p>
+          {detalhe.dados.cuidados && (
+            <p className="cuidado">
+              <AlertTriangle size={18} aria-hidden="true" />
+              <span><strong>Cuidado:</strong> {detalhe.dados.cuidados}</span>
+            </p>
+          )}
+          <Link to={`/mapa?materialId=${id}`} className="botao">
+            <MapPin size={18} aria-hidden="true" /> Onde levar
+          </Link>
+        </>
+      )}
+    </div>
   );
 }

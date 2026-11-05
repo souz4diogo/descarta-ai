@@ -1,15 +1,16 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MapPin, Search, BookOpen, Navigation } from "lucide-react";
-import { api, type Categoria } from "../api";
+import { api } from "../api";
+import { useConsulta } from "../util";
 import { IconeCategoria } from "../icones";
 
 export default function Inicio() {
   const [busca, setBusca] = useState("");
-  const [categorias, setCategorias] = useState<Categoria[]>([]);
   const navegar = useNavigate();
 
-  useEffect(() => { api.categorias().then(setCategorias).catch(() => {}); }, []);
+  // Os atalhos por categoria são opcionais: se a API falhar, a seção apenas não aparece.
+  const categorias = useConsulta(s => api.categorias(s), []).dados ?? [];
 
   const buscar = (e: FormEvent) => {
     e.preventDefault();
@@ -26,7 +27,7 @@ export default function Inicio() {
         <form className="busca-hero" onSubmit={buscar} role="search">
           <label htmlFor="busca-inicio" className="sr-only">O que você quer descartar?</label>
           <Search size={20} aria-hidden="true" className="busca-icone" />
-          <input id="busca-inicio" type="search" placeholder="Ex.: pilha, óleo de cozinha, colchão"
+          <input id="busca-inicio" type="search" maxLength={60} placeholder="Ex.: pilha, óleo de cozinha, colchão"
             value={busca} onChange={e => setBusca(e.target.value)} autoComplete="off" />
           <button type="submit" className="botao">Buscar</button>
         </form>

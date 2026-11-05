@@ -50,9 +50,40 @@ npm run dev
 | `VITE_CONTATO_EMAIL` | E-mail de contato exibido em Sobre, Privacidade e Termos |
 | `VITE_NSI_CNPJ` | CNPJ do responsável pelo site |
 
+### Configuração da API em produção
+
+Veja `.env.example` na raiz. Pontos principais:
+
+| Variável | Descrição |
+|---|---|
+| `ConnectionStrings__Default` | Conexão com o PostgreSQL (use usuário e senha próprios, não `postgres`) |
+| `Cors__Origens` | Domínios do site autorizados a chamar a API |
+| `Banco__MigrarAoIniciar` | `true` para aplicar migrações e carga inicial ao subir |
+| `Swagger__Habilitado` | Expõe `/swagger` fora do ambiente de desenvolvimento (padrão: desligado) |
+| `Limite__RequisicoesPorMinuto` | Limite por IP (padrão 120); acima disso a API responde 429 |
+| `Proxy__Confiaveis__0` | IP do proxy reverso, para o limite usar o IP real do usuário |
+
+## Organização do código
+
+```
+api/DescartaAi.Api/
+├── Dominio/          entidades e enums
+├── Dados/            DbContext, migrações e carga inicial (catálogo + pontos do OSM)
+├── Modulos/
+│   ├── Materiais/    endpoints, serviço e DTOs do guia
+│   └── Pontos/       endpoints, serviço, DTOs e validação da busca por proximidade
+└── Infraestrutura/   segurança (CORS, limite, cabeçalhos, HTTPS) e tratamento de erros
+
+web/src/
+├── paginas/          uma página por rota
+├── componentes/      peças reutilizáveis (avisos, esqueletos de carregamento)
+├── api.ts            cliente da API com cancelamento de requisições
+└── util.ts           formatação e hook useConsulta
+```
+
 ## API
 
-Base: `/v1`. Documentação interativa em `/swagger`.
+Base: `/v1`. Documentação interativa em `/swagger` (em desenvolvimento).
 
 | Método | Rota | Descrição |
 |---|---|---|

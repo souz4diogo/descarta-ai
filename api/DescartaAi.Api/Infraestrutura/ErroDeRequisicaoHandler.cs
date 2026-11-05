@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Diagnostics;
 
-namespace DescartaAi.Api;
+namespace DescartaAi.Api.Infraestrutura;
 
 /// <summary>Converte parâmetros mal formatados (ex.: lat=abc) em 400 no padrão RFC 7807.</summary>
 public class ErroDeRequisicaoHandler(IProblemDetailsService problemas) : IExceptionHandler

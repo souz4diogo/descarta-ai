@@ -2,6 +2,12 @@ using NetTopologySuite.Geometries;
 
 namespace DescartaAi.Api.Dominio;
 
+/// <summary>Sistema de referência das coordenadas (latitude/longitude GPS).</summary>
+public static class Srid
+{
+    public const int Wgs84 = 4326;
+}
+
 public enum PapelUsuario { Parceiro, Admin }
 public enum StatusPonto { Pendente, Aprovado, Rejeitado, Inativo }
 public enum MotivoReporte { Fechado, EnderecoErrado, NaoAceitaMaterial, Outro }

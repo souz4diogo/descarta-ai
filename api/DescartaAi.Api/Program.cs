@@ -1,42 +1,52 @@
 using DescartaAi.Api.Dados;
-using DescartaAi.Api;
-using DescartaAi.Api.Modulos;
+using DescartaAi.Api.Dados.Carga;
+using DescartaAi.Api.Infraestrutura;
+using DescartaAi.Api.Modulos.Materiais;
+using DescartaAi.Api.Modulos.Pontos;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AppDbContext>(o =>
-    o.UseNpgsql(builder.Configuration.GetConnectionString("Default"), n => n.UseNetTopologySuite())
+    o.UseNpgsql(builder.Configuration.GetConnectionString("Default"), n => n.UseNetTopologySuite().EnableRetryOnFailure(maxRetryCount: 3))
      .UseSnakeCaseNamingConvention());
 
-var origens = builder.Configuration["Cors:Origens"]?
-    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? [];
-builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
-    p.WithOrigins(origens).AllowAnyHeader().AllowAnyMethod()));
+builder.Services.AddScoped<IMateriaisServico, MateriaisServico>();
+builder.Services.AddScoped<IPontosServico, PontosServico>();
 
+builder.Services.AddSeguranca(builder.Configuration);
 builder.Services.AddExceptionHandler<ErroDeRequisicaoHandler>();
 builder.Services.AddProblemDetails();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(o => o.SwaggerDoc("v1", new() { Title = "Descarta Aí API", Version = "v1" }));
+
+var swaggerHabilitado = builder.Environment.IsDevelopment() || builder.Configuration.GetValue<bool>("Swagger:Habilitado");
+if (swaggerHabilitado)
+{
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen(o => o.SwaggerDoc("v1", new() { Title = "Descarta Aí API", Version = "v1" }));
+}
 
 var app = builder.Build();
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
-app.UseCors();
-app.UseSwagger();
-app.UseSwaggerUI();
+app.UseSeguranca();
 
-if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Seed:Executar"))
+if (swaggerHabilitado)
 {
-    await using var scope = app.Services.CreateAsyncScope();
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await db.Database.MigrateAsync();
-    await Seed.ExecutarAsync(db);
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
-var v1 = app.MapGroup("/v1");
-v1.MapMateriais();
-v1.MapPontos();
+if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Banco:MigrarAoIniciar"))
+{
+    await using var escopo = app.Services.CreateAsyncScope();
+    var db = escopo.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.MigrateAsync();
+    await CargaInicial.ExecutarAsync(db);
+}
+
+app.MapGroup("/v1")
+    .MapMateriais()
+    .MapPontos();
 
 app.Run();
