@@ -1,0 +1,7 @@
+# Quebras de linha padronizadas (LF) no repositório, independente do sistema de quem commita.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff2 binary
