@@ -50,3 +50,6 @@ app.MapGroup("/v1")
     .MapPontos();
 
 app.Run();
+
+/// <summary>Exposto para os testes de integração (WebApplicationFactory).</summary>
+public partial class Program;

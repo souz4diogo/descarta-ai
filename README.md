@@ -50,6 +50,21 @@ npm run dev
 | `VITE_CONTATO_EMAIL` | E-mail de contato exibido em Sobre, Privacidade e Termos |
 | `VITE_NSI_CNPJ` | CNPJ do responsável pelo site |
 
+### Testes da API
+
+```bash
+cd api
+dotnet test
+```
+
+São 40 testes, em `api/DescartaAi.Api.Tests`:
+
+- **Unidade:** validação da busca por proximidade (coordenadas e raio).
+- **Integração:** sobem a API completa contra um PostgreSQL + PostGIS real, criado automaticamente em um contêiner descartável ([Testcontainers](https://dotnet.testcontainers.org)). Cobrem a busca sem acento e por sinônimos, a ordenação por distância, o filtro por material e raio, a regra de que pontos pendentes não são públicos e os erros 400/404.
+- **Segurança:** cabeçalhos, Swagger desligado em produção, CORS só para a origem configurada, limite de requisições (429) e curingas do LIKE escapados.
+
+Requer o Docker em execução.
+
 ### Configuração da API em produção
 
 Veja `.env.example` na raiz. Pontos principais:
@@ -73,6 +88,11 @@ api/DescartaAi.Api/
 │   ├── Materiais/    endpoints, serviço e DTOs do guia
 │   └── Pontos/       endpoints, serviço, DTOs e validação da busca por proximidade
 └── Infraestrutura/   segurança (CORS, limite, cabeçalhos, HTTPS) e tratamento de erros
+
+api/DescartaAi.Api.Tests/
+├── Unidade/          regras isoladas, sem banco
+├── Integracao/       API + PostGIS real (materiais, pontos, segurança)
+└── Infra/            contêiner do banco e fábrica da API para os testes
 
 web/src/
 ├── paginas/          uma página por rota

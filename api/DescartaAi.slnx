@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="DescartaAi.Api.Tests/DescartaAi.Api.Tests.csproj" />
+  <Project Path="DescartaAi.Api/DescartaAi.Api.csproj" />
+</Solution>
