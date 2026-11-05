@@ -21,14 +21,15 @@ const consulta = (valores: Record<string, string | number | undefined>) => {
   const q = new URLSearchParams();
   for (const [chave, valor] of Object.entries(valores))
     if (valor !== undefined && valor !== "") q.set(chave, String(valor));
-  return q.toString();
+  const texto = q.toString();
+  return texto ? `?${texto}` : "";
 };
 
 export const api = {
   categorias: (sinal?: AbortSignal) => get<Categoria[]>("/categorias", sinal),
   materiais: (filtro: { busca?: string; categoriaId?: number } = {}, sinal?: AbortSignal) =>
-    get<MaterialResumo[]>(`/materiais?${consulta(filtro)}`, sinal),
+    get<MaterialResumo[]>(`/materiais${consulta(filtro)}`, sinal),
   material: (id: number, sinal?: AbortSignal) => get<MaterialDetalhe>(`/materiais/${id}`, sinal),
   proximos: (filtro: { lat: number; lng: number; raio: number; materialId?: number }, sinal?: AbortSignal) =>
-    get<PontoProximo[]>(`/pontos/proximos?${consulta(filtro)}`, sinal),
+    get<PontoProximo[]>(`/pontos/proximos${consulta(filtro)}`, sinal),
 };

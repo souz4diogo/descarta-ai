@@ -65,6 +65,23 @@ São 40 testes, em `api/DescartaAi.Api.Tests`:
 
 Requer o Docker em execução.
 
+### Testes do site
+
+```bash
+cd web
+npm test            # roda uma vez
+npm run test:watch  # roda a cada alteração
+```
+
+São 50 testes ([Vitest](https://vitest.dev) + [Testing Library](https://testing-library.com)) que simulam o uso real (digitar, clicar, escolher filtros) com a API substituída por respostas controladas:
+
+- **Guia:** busca com espera de digitação, filtros gravados na URL, item aberto com instruções e link para o mapa, lista vazia e erros com "Tentar de novo".
+- **Mapa:** distâncias, filtros vindos do guia, enquadramento, seleção de ponto, localização permitida ou negada, aumento de raio e link de rota.
+- **Navegação e páginas institucionais:** menu, rodapé, página não encontrada e conteúdo exigido pela LGPD.
+- **Base:** formatação, cliente da API e o hook `useConsulta`, incluindo respostas que chegam fora de ordem.
+
+Não precisa da API nem do Docker.
+
 ### Configuração da API em produção
 
 Veja `.env.example` na raiz. Pontos principais:
@@ -97,6 +114,7 @@ api/DescartaAi.Api.Tests/
 web/src/
 ├── paginas/          uma página por rota
 ├── componentes/      peças reutilizáveis (avisos, esqueletos de carregamento)
+├── testes/           configuração e auxiliares dos testes (*.test.tsx ficam ao lado do código)
 ├── api.ts            cliente da API com cancelamento de requisições
 └── util.ts           formatação e hook useConsulta
 ```
