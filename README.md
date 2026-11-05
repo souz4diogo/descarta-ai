@@ -68,10 +68,6 @@ Erros seguem o padrão RFC 7807 (`application/problem+json`).
 
 Os pontos de coleta iniciais vêm do OpenStreetMap (© colaboradores do OpenStreetMap, licença [ODbL](https://opendatacommons.org/licenses/odbl/)). Correções e novos pontos são bem-vindos pelo contato informado no site.
 
-## Contribuindo
-
-Veja [CONTRIBUTING.md](CONTRIBUTING.md).
-
 ## Licença
 
 Veja [LICENSE](LICENSE).
