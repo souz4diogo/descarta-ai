@@ -1,0 +1,10 @@
+node_modules/
+bin/
+obj/
+.vs/
+.env
+*.user
+dist/
+Claude outputs/
+.expo/
+docs/

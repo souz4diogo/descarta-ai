@@ -1,0 +1,68 @@
+[
+  {
+    "osmId": "node/2105989149",
+    "nome": "Coletor de recicláveis",
+    "endereco": "Rotatória Tosca de Castro Kohl - São Vicente",
+    "cidade": "Araçatuba",
+    "uf": "SP",
+    "cep": "16010-301",
+    "lat": -21.2066501,
+    "lng": -50.4452433,
+    "materiais": [
+      "Papel, plástico, vidro e metal"
+    ]
+  },
+  {
+    "osmId": "node/2592993841",
+    "nome": "Coletor de recicláveis",
+    "endereco": "Rodovia Marechal Rondon",
+    "cidade": "Araçatuba",
+    "uf": "SP",
+    "cep": null,
+    "lat": -21.201442,
+    "lng": -50.5487809,
+    "materiais": [
+      "Pilha comum e alcalina",
+      "Papel, plástico, vidro e metal"
+    ]
+  },
+  {
+    "osmId": "node/4528547938",
+    "nome": "Coletor de recicláveis",
+    "endereco": "Avenida Umuarama - Vila Mendonça",
+    "cidade": "Araçatuba",
+    "uf": "SP",
+    "cep": "16013-150",
+    "lat": -21.2260068,
+    "lng": -50.4191844,
+    "materiais": [
+      "Papel, plástico, vidro e metal"
+    ]
+  },
+  {
+    "osmId": "node/12177614419",
+    "nome": "Coletor de pilhas",
+    "endereco": "Avenida João Arruda Brasil - São Vicente",
+    "cidade": "Araçatuba",
+    "uf": "SP",
+    "cep": "16072-105",
+    "lat": -21.2054746,
+    "lng": -50.4465294,
+    "materiais": [
+      "Pilha comum e alcalina"
+    ]
+  },
+  {
+    "osmId": "way/1311819205",
+    "nome": "Centro de reciclagem",
+    "endereco": "Rua Rafael Manarelli - São José",
+    "cidade": "Araçatuba",
+    "uf": "SP",
+    "cep": "16070-090",
+    "lat": -21.1991802,
+    "lng": -50.472869,
+    "materiais": [
+      "Papel, plástico, vidro e metal"
+    ]
+  }
+]
